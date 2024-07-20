@@ -85,22 +85,35 @@ function Creator.Disconnect()
 end
 
 function Creator.GetThemeProperty(Property)
-	if Themes[require(Root).Theme][Property] then
-		return Themes[require(Root).Theme][Property]
-	end
-	return Themes["Dark"][Property]
+    local theme = require(Root).Theme
+    if Themes[theme] and Themes[theme][Property] then
+        return Themes[theme][Property]
+    end
+    return Themes["Dark"][Property]
 end
 
 function Creator.UpdateTheme()
-	for Instance, Object in next, Creator.Registry do
-		for Property, ColorIdx in next, Object.Properties do
-			Instance[Property] = Creator.GetThemeProperty(ColorIdx)
-		end
-	end
+    print("Updating theme...")
+    for Instance, Object in pairs(Creator.Registry) do
+        print("Instance:", Instance)
+        for Property, ColorIdx in pairs(Object.Properties) do
+            local success, result = pcall(function()
+                Instance[Property] = Creator.GetThemeProperty(ColorIdx)
+            end)
+            if not success then
+                warn("Failed to set property:", Property, "Error:", result)
+            end
+        end
+    end
 
-	for _, Motor in next, Creator.TransparencyMotors do
-		Motor:setGoal(Flipper.Instant.new(Creator.GetThemeProperty("ElementTransparency")))
-	end
+    for _, Motor in pairs(Creator.TransparencyMotors) do
+        local success, result = pcall(function()
+            Motor:setGoal(Flipper.Instant.new(Creator.GetThemeProperty("ElementTransparency")))
+        end)
+        if not success then
+            warn("Failed to set motor goal:", result)
+        end
+    end
 end
 
 function Creator.AddThemeObject(Object, Properties)
